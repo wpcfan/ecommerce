@@ -9,9 +9,11 @@ from crispy_forms.layout import HTML, Div, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from oscar.core.loading import get_model
+from oscar.core.loading import get_class, get_model
 
 logger = logging.getLogger(__name__)
+
+Applicator = get_class('offer.utils', 'Applicator')
 Basket = get_model('basket', 'Basket')
 
 
@@ -35,8 +37,9 @@ class PaymentForm(forms.Form):
     to CyberSource Silent Order POST, but should work nicely with other payment providers.
     """
 
-    def __init__(self, user, *args, **kwargs):
+    def __init__(self, user, request, *args, **kwargs):
         super(PaymentForm, self).__init__(*args, **kwargs)
+        self.request = request
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Div('basket'),
@@ -81,7 +84,9 @@ class PaymentForm(forms.Form):
                 css_class='form-item col-md-6'
             )
         )
-        self.fields['basket'].queryset = self.fields['basket'].queryset.filter(owner=user)
+
+        self.fields['basket'].queryset = self.fields['basket'].queryset.filter(owner=user, status=Basket.OPEN)
+
         for bound_field in self:
             # https://www.w3.org/WAI/tutorials/forms/validation/#validating-required-input
             if hasattr(bound_field, 'field') and bound_field.field.required:
@@ -91,7 +96,14 @@ class PaymentForm(forms.Form):
                 self.fields[bound_field.name].label = _('{label} (required)').format(label=bound_field.label)
                 bound_field.field.widget.attrs['required'] = 'required'
 
-    basket = forms.ModelChoiceField(queryset=Basket.objects.all(), widget=forms.HiddenInput(), required=False)
+    basket = forms.ModelChoiceField(
+        queryset=Basket.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False,
+        error_messages={
+            'invalid_choice': _('There was a problem retrieving your basket. Refresh the page to try again.'),
+        }
+    )
     first_name = forms.CharField(max_length=60, label=_('First Name'))
     last_name = forms.CharField(max_length=60, label=_('Last Name'))
     address_line1 = forms.CharField(max_length=60, label=_('Address'), required=False)
@@ -102,6 +114,15 @@ class PaymentForm(forms.Form):
     state = forms.CharField(max_length=60, required=False, label=_('State/Province'))
     postal_code = forms.CharField(max_length=10, required=False, label=_('Zip/Postal Code'))
     country = forms.ChoiceField(choices=country_choices, label=_('Country'))
+
+    def clean_basket(self):
+        basket = self.cleaned_data['basket']
+
+        if basket:
+            basket.strategy = self.request.strategy
+            Applicator().apply(basket, self.request.user, self.request)
+
+        return basket
 
     def clean(self):
         cleaned_data = super(PaymentForm, self).clean()
@@ -153,3 +174,7 @@ class PaymentForm(forms.Form):
                         'Postal codes for the U.S. and Canada are limited to nine (9) characters.')})
 
         return cleaned_data
+
+
+class StripePaymentForm(PaymentForm):
+    stripeToken = forms.CharField(widget=forms.HiddenInput(), required=True)
