@@ -5,6 +5,7 @@ import ddt
 import mock
 from django.core.urlresolvers import reverse
 from django.test.client import RequestFactory
+from faker import Faker
 from oscar.apps.order.exceptions import UnableToPlaceOrder
 from oscar.apps.payment.exceptions import PaymentError
 from oscar.core.loading import get_class, get_model
@@ -336,3 +337,52 @@ class PaypalProfileAdminViewTests(TestCase):
         mock_call_command.side_effect = Exception("oof")
         self.get_response(True, 500, {"action": "list"})
         self.assertTrue(mock_call_command.called)
+
+
+class PaypalWebhookViewTests(TestCase):
+    path = reverse('paypal:webhook')
+
+    def setUp(self):
+        super(PaypalWebhookViewTests, self).setUp()
+        self.site_configuration = self.site.siteconfiguration
+        self.site_configuration.enable_paypal_dispute_webhook = True
+        self.site_configuration.save()
+
+    @mock.patch('paypalrestsdk.notifications.WebhookEvent.verify', mock.Mock(return_value=False))
+    def test_invalid_signature(self):
+        """ Verify the view returns HTTP status 403 if the signature is not valid. """
+        response = self.client.post(self.path, {}, content_type='application/json')
+        self.assertEqual(response.status_code, 403)
+
+    def test_feature_disabled(self):
+        """ Verify the view returns HTTP 404 if the webhook is disabled. """
+        self.site.siteconfiguration.enable_paypal_dispute_webhook = False
+        self.site_configuration.save()
+
+        response = self.client.post(self.path, {}, content_type='application/json')
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch('paypalrestsdk.notifications.WebhookEvent.verify', mock.Mock(return_value=True))
+    def test_success(self):
+        """ Verify the view returns HTTP 202 for a successful request. """
+        logger_name = 'ecommerce.extensions.payment.views.paypal'
+        faker = Faker()
+        email = faker.email()
+        dispute_id = faker.word()
+
+        data = {
+            'buyer_email': email,
+            'dispute_id': dispute_id,
+        }
+
+        with LogCapture(logger_name) as l:
+            response = self.client.post(self.path, data, content_type='application/json')
+
+        self.assertEqual(response.status_code, 202)
+        l.check(
+            (
+                logger_name,
+                'INFO',
+                'Dispute opened by {email}. See details at {dispute_id}'.format(email=email, dispute_id=dispute_id)
+            ),
+        )

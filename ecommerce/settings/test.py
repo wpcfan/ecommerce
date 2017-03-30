@@ -96,6 +96,7 @@ PAYMENT_PROCESSOR_CONFIG = {
             'receipt_path': PAYMENT_PROCESSOR_RECEIPT_PATH,
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
+            'dispute_webhook_id': 'fake-webhook-id',
         },
         'invoice': {}
     },
