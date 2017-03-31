@@ -331,6 +331,50 @@ class Paypal(BasePaymentProcessor):
                                                                                     response_id=entry.id)
             raise GatewayError(msg)
 
+    # def create_webhooks(self):
+    #     """ Registers webhooks. """
+    #     url = 'https://f615ef32.ngrok.io'
+    #     webhooks = paypalrestsdk.Webhook.all(api=self.paypal_api).webhooks
+    #     webhook = next((_webhook for _webhook in webhooks if _webhook.url == url), None)
+    #
+    #     event_types = [
+    #         {'name': 'CUSTOMER.DISPUTE.CREATED'},
+    #     ]
+    #
+    #
+    #     if webhook:
+    #         attributes = [
+    #             {
+    #                 "op": "replace",
+    #                 "path": "/url",
+    #                 "value": url,
+    #             },
+    #             {
+    #                 "op": "replace",
+    #                 "path": "/event_types",
+    #                 "value": event_types,
+    #             }
+    #         ]
+    #
+    #         webhook = paypalrestsdk.Webhook.find(webhook.id, api=self.paypal_api)
+    #         if webhook.replace(attributes):
+    #             logger.info('PayPal webhook [%s] updated successfully', webhook.id)
+    #         else:
+    #             logger.error('Failed to update PayPal webhook [%s]: %s', webhook.id, webhook.error)
+    #     else:
+    #         webhook = paypalrestsdk.Webhook(
+    #             {
+    #                 'url': url,
+    #                 'event_types': event_types
+    #             },
+    #             api=self.paypal_api
+    #         )
+    #
+    #         if webhook.create():
+    #             logger.info('PayPal webhook [%s] created successfully', webhook.id)
+    #         else:
+    #             logger.error('Failed to create PayPal webhook: %s', webhook.error)
+
     def verify_webhook_event(self, transmission_id, timestamp, event_body, cert_url, actual_signature,
                              auth_algo):
         """ Verifies the authenticity of a webhook request.
@@ -347,5 +391,5 @@ class Paypal(BasePaymentProcessor):
         if not self.dispute_webhook_id:
             raise ImproperlyConfigured('No PayPal dispute webhook ID set. Unable to verify webhook events.')
 
-        return paypalrestsdk.notifications.WebhookEvent.verify(
+        return paypalrestsdk.WebhookEvent.verify(
             transmission_id, timestamp, self.dispute_webhook_id, event_body, cert_url, actual_signature, auth_algo)
