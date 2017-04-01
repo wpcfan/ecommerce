@@ -1,5 +1,5 @@
 """ CyberSource payment processing. """
-from __future__ import unicode_literals
+
 
 import datetime
 import logging
@@ -17,10 +17,9 @@ from ecommerce.core.constants import ISO_8601_FORMAT
 from ecommerce.core.url_utils import get_ecommerce_url
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.constants import CYBERSOURCE_CARD_TYPE_MAP
-from ecommerce.extensions.payment.exceptions import (
-    InvalidCybersourceDecision, InvalidSignatureError, PartialAuthorizationError, PCIViolation,
-    ProcessorMisconfiguredError
-)
+from ecommerce.extensions.payment.exceptions import (InvalidCybersourceDecision, InvalidSignatureError,
+                                                     PartialAuthorizationError, PCIViolation,
+                                                     ProcessorMisconfiguredError)
 from ecommerce.extensions.payment.helpers import sign
 from ecommerce.extensions.payment.processors import BaseClientSidePaymentProcessor, HandledProcessorResponse
 from ecommerce.extensions.payment.transport import RequestsTransport
@@ -186,7 +185,7 @@ class Cybersource(BaseClientSidePaymentProcessor):
         parameters.update(kwargs.get('extra_parameters', {}))
 
         # Mitigate PCI compliance issues
-        signed_field_names = parameters.keys()
+        signed_field_names = list(parameters.keys())
         if any(pci_field in signed_field_names for pci_field in self.PCI_FIELDS):
             raise PCIViolation('One or more PCI-related fields is contained in the payment parameters. '
                                'This service is NOT PCI-compliant! Deactivate this service immediately!')
@@ -304,7 +303,7 @@ class Cybersource(BaseClientSidePaymentProcessor):
 
             purchase_totals = client.factory.create('ns0:PurchaseTotals')
             purchase_totals.currency = currency
-            purchase_totals.grandTotalAmount = unicode(amount)
+            purchase_totals.grandTotalAmount = str(amount)
 
             response = client.service.runTransaction(merchantID=self.merchant_id, merchantReferenceCode=order.number,
                                                      orderRequestToken=reference_number,
@@ -335,7 +334,7 @@ def suds_response_to_dict(d):  # pragma: no cover
     Source: http://stackoverflow.com/a/15678861/592820
     """
     out = {}
-    for k, v in asdict(d).iteritems():
+    for k, v in asdict(d).items():
         if hasattr(v, '__keylist__'):
             out[k] = suds_response_to_dict(v)
         elif isinstance(v, list):

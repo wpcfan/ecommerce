@@ -1,5 +1,7 @@
 import datetime
-import urllib
+import urllib.error
+import urllib.parse
+import urllib.request
 
 import ddt
 import httpretty
@@ -16,9 +18,8 @@ from ecommerce.core.url_utils import get_lms_url
 from ecommerce.coupons.tests.mixins import CouponMixin
 from ecommerce.coupons.views import voucher_is_valid
 from ecommerce.enterprise.tests.mixins import EnterpriseServiceMockMixin
-from ecommerce.enterprise.utils import (
-    get_enterprise_course_consent_url, get_enterprise_customer_data_sharing_consent_token
-)
+from ecommerce.enterprise.utils import (get_enterprise_course_consent_url,
+                                        get_enterprise_customer_data_sharing_consent_token)
 from ecommerce.extensions.catalogue.tests.mixins import CourseCatalogTestMixin
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
@@ -45,7 +46,7 @@ ENTERPRISE_CUSTOMER = 'cf246b88-d5f6-4908-a522-fc307e0b0c59'
 
 def format_url(base='', path='', params=None):
     if params:
-        return '{base}{path}?{params}'.format(base=base, path=path, params=urllib.urlencode(params))
+        return '{base}{path}?{params}'.format(base=base, path=path, params=urllib.parse.urlencode(params))
     return '{base}{path}'.format(base=base, path=path)
 
 
@@ -79,7 +80,7 @@ class VoucherIsValidTests(CourseCatalogTestMixin, TestCase):
         valid, msg = voucher_is_valid(voucher=voucher, products=[product], request=self.request)
 
         self.assertTrue(valid)
-        self.assertEquals(msg, '')
+        self.assertEqual(msg, '')
 
     def test_no_voucher(self):
         """ Verify voucher_is_valid() assess that the voucher is invalid. """
@@ -225,7 +226,7 @@ class CouponOfferViewTests(ApiMockMixin, CouponMixin, CourseCatalogTestMixin, En
         response = self.client.get(url)
 
         testserver_login_url = self.get_full_url(reverse('login'))
-        expected_url = '{path}?next={next}'.format(path=testserver_login_url, next=urllib.quote(url))
+        expected_url = '{path}?next={next}'.format(path=testserver_login_url, next=urllib.parse.quote(url))
         self.assertRedirects(response, expected_url, target_status_code=302)
 
     def test_credit_seat_response(self):

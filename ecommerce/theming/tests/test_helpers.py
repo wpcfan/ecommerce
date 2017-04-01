@@ -6,10 +6,8 @@ from django.test import override_settings
 from mock import patch
 
 from ecommerce.tests.testcases import TestCase
-from ecommerce.theming.helpers import (
-    Theme, get_all_theme_template_dirs, get_current_site_theme, get_current_theme, get_theme_base_dir,
-    get_theme_base_dirs, get_themes
-)
+from ecommerce.theming.helpers import (Theme, get_all_theme_template_dirs, get_current_site_theme, get_current_theme,
+                                       get_theme_base_dir, get_theme_base_dirs, get_themes)
 from ecommerce.theming.test_utils import with_comprehensive_theme
 
 
@@ -46,7 +44,7 @@ class TestHelpers(TestCase):
         """
         theme = get_current_theme()
         self.assertEqual(theme.path, settings.DJANGO_ROOT + "/tests/themes/test-theme")
-        self.assertIn(theme.path, unicode(theme))
+        self.assertIn(theme.path, str(theme))
 
     @with_comprehensive_theme('test-theme-2')
     def test_current_theme_path_2(self):

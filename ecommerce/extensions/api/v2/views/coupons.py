@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 import logging
 
@@ -299,7 +299,7 @@ class CouponViewSet(EdxOrderPlacementMixin, viewsets.ModelViewSet):
         else:
             range_data['enterprise_customer'] = None
 
-        for attr, value in range_data.iteritems():
+        for attr, value in list(range_data.items()):
             setattr(voucher_range, attr, value)
 
         voucher_range.save()

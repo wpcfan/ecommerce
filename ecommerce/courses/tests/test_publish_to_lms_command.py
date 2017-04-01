@@ -1,8 +1,6 @@
 # encoding: utf-8
 """Contains the tests for publish to lms command."""
 
-from __future__ import unicode_literals
-
 import logging
 import os
 import tempfile
@@ -64,7 +62,7 @@ class PublishCoursesToLMSTests(CourseCatalogTestMixin, TransactionTestCase):
             (
                 LOGGER_NAME,
                 "ERROR",
-                u"(1/1) Failed to publish {}: Course does not exist.".format(fake_course_id)
+                "(1/1) Failed to publish {}: Course does not exist.".format(fake_course_id)
             ),
             (
                 LOGGER_NAME,
@@ -90,12 +88,12 @@ class PublishCoursesToLMSTests(CourseCatalogTestMixin, TransactionTestCase):
             (
                 LOGGER_NAME,
                 "INFO",
-                u"(1/2) Successfully published {}.".format(self.course.id)
+                "(1/2) Successfully published {}.".format(self.course.id)
             ),
             (
                 LOGGER_NAME,
                 "INFO",
-                u"(2/2) Successfully published {}.".format(second_course.id)),
+                "(2/2) Successfully published {}.".format(second_course.id)),
             (
                 LOGGER_NAME,
                 "INFO",
@@ -123,7 +121,7 @@ class PublishCoursesToLMSTests(CourseCatalogTestMixin, TransactionTestCase):
             (
                 LOGGER_NAME,
                 "ERROR",
-                u"(1/1) Failed to publish {}: {}".format(self.course.id, error_msg)
+                "(1/1) Failed to publish {}: {}".format(self.course.id, error_msg)
             ),
             (
                 LOGGER_NAME,
@@ -140,7 +138,7 @@ class PublishCoursesToLMSTests(CourseCatalogTestMixin, TransactionTestCase):
 
     def test_unicode_file_name(self):
         """ Verify the unicode files name are read correctly."""
-        unicode_file = os.path.join(tempfile.gettempdir(), u"اول.txt")
+        unicode_file = os.path.join(tempfile.gettempdir(), "اول.txt")
         self.create_course_ids_file(unicode_file, [self.course.id])
         expected = (
             (
@@ -151,7 +149,7 @@ class PublishCoursesToLMSTests(CourseCatalogTestMixin, TransactionTestCase):
             (
                 LOGGER_NAME,
                 "INFO",
-                u"(1/1) Successfully published {}.".format(self.course.id)
+                "(1/1) Successfully published {}.".format(self.course.id)
             ),
             (
                 LOGGER_NAME,

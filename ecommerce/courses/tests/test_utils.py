@@ -12,9 +12,8 @@ from ecommerce.coupons.tests.mixins import CourseCatalogMockMixin
 from ecommerce.courses.models import Course
 from ecommerce.courses.tests.factories import CourseFactory
 from ecommerce.courses.tests.mixins import CourseCatalogServiceMockMixin
-from ecommerce.courses.utils import (
-    get_certificate_type_display_value, get_course_catalogs, get_course_info_from_catalog, mode_for_seat
-)
+from ecommerce.courses.utils import (get_certificate_type_display_value, get_course_catalogs,
+                                     get_course_info_from_catalog, mode_for_seat)
 from ecommerce.extensions.catalogue.tests.mixins import CourseCatalogTestMixin
 from ecommerce.tests.testcases import TestCase
 

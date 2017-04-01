@@ -1,4 +1,6 @@
-import urllib
+import urllib.error
+import urllib.parse
+import urllib.request
 from decimal import Decimal
 
 import ddt
@@ -212,7 +214,7 @@ class ReceiptResponseViewTests(CourseCatalogMockMixin, LmsApiMockMixin, RefundTe
         self.client.logout()
         response = self.client.get(self.path)
         testserver_login_url = self.get_full_url(reverse(settings.LOGIN_URL))
-        expected_url = '{path}?next={next}'.format(path=testserver_login_url, next=urllib.quote(self.path))
+        expected_url = '{path}?next={next}'.format(path=testserver_login_url, next=urllib.parse.quote(self.path))
         self.assertRedirects(response, expected_url, target_status_code=302)
 
     def test_get_receipt_for_nonexisting_order(self):

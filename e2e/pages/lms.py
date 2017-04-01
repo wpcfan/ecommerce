@@ -1,6 +1,8 @@
 import abc
 import socket
-import urllib
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from bok_choy.page_object import PageLoadError, PageObject, unguarded
 from bok_choy.promise import EmptyPromise
@@ -11,9 +13,7 @@ from e2e.config import BASIC_AUTH_PASSWORD, BASIC_AUTH_USERNAME, LMS_URL_ROOT, M
 from e2e.pages import submit_lms_login_form
 
 
-class LMSPage(PageObject):  # pylint: disable=abstract-method
-    __metaclass__ = abc.ABCMeta
-
+class LMSPage(PageObject, metaclass=abc.ABCMeta):  # pylint: disable=abstract-method
     def _build_url(self, path):
         url = '{}/{}'.format(LMS_URL_ROOT, path)
 
@@ -32,7 +32,7 @@ class LMSLoginPage(LMSPage):
 
         if course_id:
             params = {'enrollment_action': 'enroll', 'course_id': course_id}
-            url = '{}?{}'.format(url, urllib.urlencode(params))
+            url = '{}?{}'.format(url, urllib.parse.urlencode(params))
 
         return url
 
@@ -62,7 +62,7 @@ class LMSRegistrationPage(LMSPage):
 
         if course_id:
             params = {'enrollment_action': 'enroll', 'course_id': course_id}
-            url = '{}?{}'.format(url, urllib.urlencode(params))
+            url = '{}?{}'.format(url, urllib.parse.urlencode(params))
 
         return url
 
@@ -94,7 +94,7 @@ class LMSCourseModePage(LMSPage):
 
     @property
     def url(self):
-        path = 'course_modes/choose/{}/'.format(urllib.quote_plus(self.course_id))
+        path = 'course_modes/choose/{}/'.format(urllib.parse.quote_plus(self.course_id))
         return self._build_url(path)
 
     def __init__(self, browser, course_id):

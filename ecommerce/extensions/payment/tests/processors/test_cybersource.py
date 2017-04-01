@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Unit tests of Cybersource payment processor implementation."""
-from __future__ import unicode_literals
+
 
 import copy
 from uuid import UUID
@@ -15,10 +15,9 @@ from oscar.apps.payment.exceptions import GatewayError, TransactionDeclined, Use
 from oscar.test import factories
 
 from ecommerce.courses.tests.factories import CourseFactory
-from ecommerce.extensions.payment.exceptions import (
-    InvalidCybersourceDecision, InvalidSignatureError, PartialAuthorizationError, PCIViolation,
-    ProcessorMisconfiguredError
-)
+from ecommerce.extensions.payment.exceptions import (InvalidCybersourceDecision, InvalidSignatureError,
+                                                     PartialAuthorizationError, PCIViolation,
+                                                     ProcessorMisconfiguredError)
 from ecommerce.extensions.payment.processors.cybersource import Cybersource, suds_response_to_dict
 from ecommerce.extensions.payment.tests.mixins import CybersourceMixin
 from ecommerce.extensions.payment.tests.processors.mixins import PaymentProcessorTestCaseMixin

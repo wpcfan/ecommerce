@@ -1,9 +1,8 @@
 """ Views for interacting with the payment processor. """
-from __future__ import unicode_literals
 
 import logging
 import os
-from cStringIO import StringIO
+from io import StringIO
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.management import call_command
@@ -68,17 +67,17 @@ class PaypalPaymentExecutionView(EdxOrderPlacementMixin, View):
             Applicator().apply(basket, basket.owner, self.request)
             return basket
         except MultipleObjectsReturned:
-            logger.warning(u"Duplicate payment ID [%s] received from PayPal.", payment_id)
+            logger.warning("Duplicate payment ID [%s] received from PayPal.", payment_id)
             return None
         except Exception:  # pylint: disable=broad-except
-            logger.exception(u"Unexpected error during basket retrieval while executing PayPal payment.")
+            logger.exception("Unexpected error during basket retrieval while executing PayPal payment.")
             return None
 
     def get(self, request):
         """Handle an incoming user returned to us by PayPal after approving payment."""
         payment_id = request.GET.get('paymentId')
         payer_id = request.GET.get('PayerID')
-        logger.info(u"Payment [%s] approved by payer [%s]", payment_id, payer_id)
+        logger.info("Payment [%s] approved by payer [%s]", payment_id, payer_id)
 
         paypal_response = request.GET.dict()
         basket = self._get_basket(payment_id)
@@ -175,8 +174,8 @@ class PaypalProfileAdminView(View):
             pass
 
         # Format the output for display
-        output = u'STDOUT\n{out}\n\nSTDERR\n{err}\n\nLOG\n{log}'.format(out=out.getvalue(), err=err.getvalue(),
-                                                                        log=log.getvalue())
+        output = 'STDOUT\n{out}\n\nSTDERR\n{err}\n\nLOG\n{log}'.format(out=out.getvalue(), err=err.getvalue(),
+                                                                       log=log.getvalue())
 
         # Remove the log capture handler
         logger.removeHandler(log_handler)

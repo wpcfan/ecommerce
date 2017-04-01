@@ -12,11 +12,9 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 
 from e2e.api import EnrollmentApiClient, get_access_token
-from e2e.config import (
-    BASIC_AUTH_PASSWORD, BASIC_AUTH_USERNAME, ECOMMERCE_API_URL, ECOMMERCE_URL_ROOT, LMS_AUTO_AUTH, LMS_EMAIL,
-    LMS_HTTPS, LMS_PASSWORD, LMS_URL_ROOT, LMS_USERNAME, MARKETING_URL_ROOT, MAX_COMPLETION_RETRIES, PAYPAL_EMAIL,
-    PAYPAL_PASSWORD
-)
+from e2e.config import (BASIC_AUTH_PASSWORD, BASIC_AUTH_USERNAME, ECOMMERCE_API_URL, ECOMMERCE_URL_ROOT, LMS_AUTO_AUTH,
+                        LMS_EMAIL, LMS_HTTPS, LMS_PASSWORD, LMS_URL_ROOT, LMS_USERNAME, MARKETING_URL_ROOT,
+                        MAX_COMPLETION_RETRIES, PAYPAL_EMAIL, PAYPAL_PASSWORD)
 from e2e.expected_conditions import input_provided
 from e2e.pages import submit_lms_login_form
 from e2e.pages.ecommerce import EcommerceLoginPage
@@ -307,7 +305,7 @@ class PaymentMixin(object):
                 select.select_by_value(value)
 
         # Fill in the text fields
-        for field, value in billing_information.items():
+        for field, value in list(billing_information.items()):
             self.browser.find_element_by_css_selector('#' + field).send_keys(value)
 
         # Click the payment button

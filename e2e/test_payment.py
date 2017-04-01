@@ -16,9 +16,7 @@ from e2e.pages.marketing import MarketingCourseAboutPage
 
 
 class BasePaymentTest(UnenrollmentMixin, EcommerceApiMixin, EnrollmentApiMixin, LogistrationMixin, PaymentMixin,
-                      WebAppTest):
-    __metaclass__ = ABCMeta
-
+                      WebAppTest, metaclass=ABCMeta):
     def setUp(self):
         super(BasePaymentTest, self).setUp()
         self.course_id = VERIFIED_COURSE_ID

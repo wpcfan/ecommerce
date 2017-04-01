@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 import csv
 import logging
@@ -19,13 +19,10 @@ from ecommerce.core.url_utils import get_ecommerce_url
 from ecommerce.core.views import StaffOnlyMixin
 from ecommerce.coupons.decorators import login_required_for_credit
 from ecommerce.enterprise.exceptions import EnterpriseDoesNotExist
-from ecommerce.enterprise.utils import (
-    enterprise_customer_user_needs_consent,
-    get_enterprise_course_consent_url,
-    get_enterprise_customer_consent_failed_context_data,
-    get_enterprise_customer_data_sharing_consent_token,
-    get_enterprise_customer_from_voucher
-)
+from ecommerce.enterprise.utils import (enterprise_customer_user_needs_consent, get_enterprise_course_consent_url,
+                                        get_enterprise_customer_consent_failed_context_data,
+                                        get_enterprise_customer_data_sharing_consent_token,
+                                        get_enterprise_customer_from_voucher)
 from ecommerce.extensions.api import exceptions
 from ecommerce.extensions.basket.utils import prepare_basket
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin

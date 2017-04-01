@@ -9,9 +9,8 @@ from django.core.urlresolvers import reverse
 from freezegun import freeze_time
 from oscar.core.loading import get_model
 
-from ecommerce.core.constants import (
-    ENROLLMENT_CODE_PRODUCT_CLASS_NAME, ENROLLMENT_CODE_SWITCH, ISO_8601_FORMAT, SEAT_PRODUCT_CLASS_NAME
-)
+from ecommerce.core.constants import (ENROLLMENT_CODE_PRODUCT_CLASS_NAME, ENROLLMENT_CODE_SWITCH, ISO_8601_FORMAT,
+                                      SEAT_PRODUCT_CLASS_NAME)
 from ecommerce.core.tests import toggle_switch
 from ecommerce.courses.models import Course
 from ecommerce.courses.publishers import LMSPublisher
@@ -243,8 +242,8 @@ class AtomicPublicationTests(CourseCatalogTestMixin, TestCase):
         self.assertEqual(response.status_code, 500)
         self.assert_course_does_not_exist(self.course_id)
 
-        expected = u'Course [{}] was not published to LMS because the switch [publish_course_modes_to_lms] is ' \
-                   u'disabled. To avoid ghost SKUs, data has not been saved.'.format(self.course_id)
+        expected = 'Course [{}] was not published to LMS because the switch [publish_course_modes_to_lms] is ' \
+                   'disabled. To avoid ghost SKUs, data has not been saved.'.format(self.course_id)
         self.assertEqual(response.data.get('error'), expected)
 
     def test_create(self):
@@ -305,7 +304,7 @@ class AtomicPublicationTests(CourseCatalogTestMixin, TestCase):
 
         self.assertEqual(
             response.data.get('products')[0],
-            u'Invalid product class [{product_class}] requested.'.format(product_class=product_class)
+            'Invalid product class [{product_class}] requested.'.format(product_class=product_class)
         )
 
     def test_incomplete_product_attributes(self):
@@ -317,7 +316,7 @@ class AtomicPublicationTests(CourseCatalogTestMixin, TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.data.get('products')[0],
-            u'Products must indicate whether ID verification is required.'
+            'Products must indicate whether ID verification is required.'
         )
         self.assert_course_does_not_exist(self.course_id)
 
@@ -330,7 +329,7 @@ class AtomicPublicationTests(CourseCatalogTestMixin, TestCase):
 
         self.assertEqual(
             response.data.get('products')[0],
-            u'Products must have a price.'
+            'Products must have a price.'
         )
         self.assert_course_does_not_exist(self.course_id)
 

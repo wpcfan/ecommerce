@@ -1,8 +1,8 @@
-from __future__ import unicode_literals
+
 
 import hashlib
 import logging
-from urlparse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 
 import six
 from django.core.exceptions import ValidationError

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 import ddt
 import httpretty
@@ -20,10 +20,9 @@ from ecommerce.extensions.catalogue.tests.mixins import CourseCatalogTestMixin
 from ecommerce.extensions.fulfillment.modules import CouponFulfillmentModule
 from ecommerce.extensions.fulfillment.status import LINE
 from ecommerce.extensions.test.factories import prepare_voucher
-from ecommerce.extensions.voucher.utils import (
-    create_vouchers, generate_coupon_report, get_voucher_and_products_from_code,
-    get_voucher_discount_info, update_voucher_offer
-)
+from ecommerce.extensions.voucher.utils import (create_vouchers, generate_coupon_report,
+                                                get_voucher_and_products_from_code, get_voucher_discount_info,
+                                                update_voucher_offer)
 from ecommerce.tests.mixins import LmsApiMockMixin
 from ecommerce.tests.testcases import TestCase
 

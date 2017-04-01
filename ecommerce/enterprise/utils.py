@@ -4,7 +4,8 @@ Helper methods for enterprise app.
 import hashlib
 import hmac
 from collections import OrderedDict
-from urllib import urlencode
+from functools import reduce
+from urllib.parse import urlencode
 
 import waffle
 from django.conf import settings

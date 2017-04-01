@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 import logging
 
@@ -6,9 +6,8 @@ from oscar.core.loading import get_model
 from oscar.core.utils import slugify
 from oscar.test import factories
 
-from ecommerce.core.constants import (
-    ENROLLMENT_CODE_PRODUCT_CLASS_NAME, ENROLLMENT_CODE_SWITCH, SEAT_PRODUCT_CLASS_NAME
-)
+from ecommerce.core.constants import (ENROLLMENT_CODE_PRODUCT_CLASS_NAME, ENROLLMENT_CODE_SWITCH,
+                                      SEAT_PRODUCT_CLASS_NAME)
 from ecommerce.core.tests import toggle_switch
 from ecommerce.courses.tests.factories import CourseFactory
 from ecommerce.tests.factories import PartnerFactory

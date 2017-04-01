@@ -5,9 +5,8 @@ from django.utils.translation import ugettext_lazy as _
 from oscar.apps.catalogue.abstract_models import AbstractProduct, AbstractProductAttributeValue
 from simple_history.models import HistoricalRecords
 
-from ecommerce.core.constants import (
-    COUPON_PRODUCT_CLASS_NAME, ENROLLMENT_CODE_PRODUCT_CLASS_NAME, SEAT_PRODUCT_CLASS_NAME
-)
+from ecommerce.core.constants import (COUPON_PRODUCT_CLASS_NAME, ENROLLMENT_CODE_PRODUCT_CLASS_NAME,
+                                      SEAT_PRODUCT_CLASS_NAME)
 from ecommerce.core.utils import log_message_and_raise_validation_error
 
 
@@ -34,7 +33,7 @@ class Product(AbstractProduct):
 
     def save(self, *args, **kwargs):
         try:
-            if not isinstance(self.attr.note, basestring) and self.attr.note is not None:
+            if not isinstance(self.attr.note, str) and self.attr.note is not None:
                 log_message_and_raise_validation_error(
                     'Failed to create Product. Product note value must be of type string'
                 )
@@ -85,7 +84,7 @@ class Catalog(models.Model):
     stock_records = models.ManyToManyField('partner.StockRecord', blank=True, related_name='catalogs')
 
     def __unicode__(self):
-        return u'{id}: {partner_code}-{catalog_name}'.format(
+        return '{id}: {partner_code}-{catalog_name}'.format(
             id=self.id,
             partner_code=self.partner.short_code,
             catalog_name=self.name

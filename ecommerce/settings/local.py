@@ -1,7 +1,7 @@
 """Development settings and globals."""
-from __future__ import absolute_import
 
-from urlparse import urljoin
+
+from urllib.parse import urljoin
 
 from ecommerce.settings.base import *
 

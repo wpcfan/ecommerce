@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 import oscar.models.fields.autoslugfield
 from django.conf import settings

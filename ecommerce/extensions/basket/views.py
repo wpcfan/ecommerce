@@ -1,9 +1,9 @@
-from __future__ import unicode_literals
+
 
 import logging
 from collections import OrderedDict
 from datetime import datetime
-from urllib import urlencode
+from urllib.parse import urlencode
 
 import dateutil.parser
 import waffle
@@ -253,7 +253,7 @@ class BasketSummaryView(BasketView):
                 switch_link_text, partner_sku = get_basket_switch_data(line.product)
 
             if line.has_discount:
-                benefit = self.request.basket.applied_offers().values()[0].benefit
+                benefit = list(self.request.basket.applied_offers().values())[0].benefit
                 benefit_value = format_benefit_value(benefit)
             else:
                 benefit_value = None
@@ -295,13 +295,13 @@ class BasketSummaryView(BasketView):
             return {
                 'client_side_payment_processor': payment_processor,
                 'enable_client_side_checkout': True,
-                'months': range(1, 13),
+                'months': list(range(1, 13)),
                 'payment_form': PaymentForm(
                     user=self.request.user, initial={'basket': self.request.basket}, label_suffix=''
                 ),
                 'paypal_enabled': 'paypal' in (p.NAME for p in payment_processors),
                 # Assumption is that the credit card duration is 15 years
-                'years': range(current_year, current_year + 16),
+                'years': list(range(current_year, current_year + 16)),
             }
         else:
             msg = 'Unable to load client-side payment processor [{processor}] for ' \
@@ -357,7 +357,7 @@ class BasketSummaryView(BasketView):
 
         context.update({
             'course_key': course_key,
-            'formset_lines_data': zip(formset, lines_data),
+            'formset_lines_data': list(zip(formset, lines_data)),
             'free_basket': context['order_total'].incl_tax == 0,
             'homepage_url': get_lms_url(''),
             'min_seat_quantity': 1,
