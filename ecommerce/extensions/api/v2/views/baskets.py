@@ -14,6 +14,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ecommerce.enterprise.entitlements import get_entitlement_voucher
 from ecommerce.extensions.analytics.utils import audit_log
 from ecommerce.extensions.api import data as data_api
 from ecommerce.extensions.api import exceptions as api_exceptions
@@ -334,7 +335,9 @@ class BasketCalculateView(generics.GenericAPIView):
         """ Calculate basket totals given a list of sku's
 
         Create a temporary basket add the sku's and apply an optional voucher code.
-        Then calculate the total proce less discounts.
+        Then calculate the total price less discounts. If a voucher code is not
+        provided apply vouchers in the Enterprise entitlements available
+        to the user.
 
         Arguments:
             sku (string): A list of sku(s) to calculate
@@ -362,6 +365,15 @@ class BasketCalculateView(generics.GenericAPIView):
         if not products:
             return HttpResponseBadRequest(_('Products with SKU(s) [{skus}] do not exist.').format(skus=', '.join(skus)))
 
+        vouchers = []
+        if voucher:
+            vouchers.append(voucher)
+        else:
+            for product in products:
+                voucher = get_entitlement_voucher(request, product)
+                if voucher:
+                    vouchers.append(voucher)
+
         # We wrap this in an atomic operation so we never commit this to the db.
         # This is to avoid merging this temporary basket with a real user basket.
         try:
@@ -372,7 +384,7 @@ class BasketCalculateView(generics.GenericAPIView):
                 for product in products:
                     basket.add_product(product, 1)
 
-                if voucher:
+                for voucher in vouchers:
                     basket.vouchers.add(voucher)
 
                 # Calculate any discounts on the basket.

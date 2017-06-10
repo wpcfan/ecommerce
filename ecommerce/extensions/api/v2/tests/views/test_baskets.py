@@ -418,7 +418,7 @@ class BasketCalculateViewTests(ProgramTestMixin, TestCase):
         self.assertEqual(response.data, expected)
 
     def test_basket_calculate_fixed_coupon(self):
-        """ Verufy successful basket calculation for a fixed price voucher """
+        """ Verify successful basket calculation for a fixed price voucher """
         discount = 5
         voucher, _ = prepare_voucher(_range=self.range, benefit_type=Benefit.FIXED, benefit_value=discount)
 
@@ -442,3 +442,22 @@ class BasketCalculateViewTests(ProgramTestMixin, TestCase):
         with self.assertRaises(Exception):
             self.client.get(self.url + '&code={code}'.format(code=voucher.code))
             self.assertTrue(mocked_logger.called)
+
+    @mock.patch('ecommerce.extensions.api.v2.views.baskets.get_entitlement_voucher')
+    def test_basket_calculate_entitlement_voucher(self, mock_get_entitlement_voucher):
+        """ Verify successful basket calculation considering Enterprise entitlement vouchers """
+
+        discount = 10
+        voucher, _ = prepare_voucher(_range=self.range, benefit_type=Benefit.FIXED, benefit_value=discount)
+        mock_get_entitlement_voucher.return_value = voucher
+
+        response = self.client.get(self.url)
+
+        expected = {
+            'total_incl_tax_excl_discounts': self.product_total,
+            'total_incl_tax': self.product_total - discount,
+            'currency': 'GBP'
+        }
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, expected)
