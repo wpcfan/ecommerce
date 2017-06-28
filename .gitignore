@@ -90,3 +90,7 @@ docs/_build
 
 # Visual Studio Code
 .vscode
+
+# Certificates
+*.cer
+*.pem

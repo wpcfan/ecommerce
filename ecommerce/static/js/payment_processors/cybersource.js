@@ -4,8 +4,9 @@
  */
 require([
     'jquery',
-    'pages/basket_page'
-], function($, BasketPage) {
+    'pages/basket_page',
+    'js-cookie'
+], function($, BasketPage, Cookies) {
     'use strict';
 
     var CyberSourceClient = {
@@ -40,6 +41,9 @@ require([
             $paymentForm.on('cardType:detected', function(event, data) {
                 $('input[name=card_type]', $paymentForm).val(cardMap[data.type]);
             });
+
+            this.applePayConfig = Cybersource.applePay;
+            this.initializeApplePay();
         },
 
         /**
@@ -123,6 +127,132 @@ require([
                     }
                 }
             });
+        },
+
+        initializeApplePay: function() {
+            var self = this;
+
+            if (window.ApplePaySession) {
+                ApplePaySession.canMakePaymentsWithActiveCard(self.applePayConfig.merchantIdentifier).then(
+                    function(canMakePayments) {
+                        var applePayBtn = document.getElementById('applePayBtn'),
+                            applePaySetupBtn = document.getElementById('applePaySetupBtn');
+
+                        if (canMakePayments) {
+                            console.log('Learner is eligible for Apple Pay');
+                            applePayBtn.style.display = 'inline-flex';
+                            applePayBtn.addEventListener('click', self.onApplePayButtonClicked.bind(self));
+                        } else {
+                            console.log('Apple Pay not setup.');
+
+                            if (ApplePaySession.openPaymentSetup) {
+                                applePaySetupBtn.style.display = 'inline-flex';
+                                applePaySetupBtn.addEventListener(
+                                    'click', self.onApplePaySetupButtonClicked.bind(self));
+                            } else {
+                                console.log(
+                                    'ApplePaySession.openPaymentSetup is not defined. Learner cannot setup Apple Pay.');
+                            }
+                        }
+                    }
+                );
+            }
+        },
+
+        onApplePayButtonClicked: function(event) {
+            var self = this,
+                session = new ApplePaySession(2, {
+                    countryCode: self.applePayConfig.countryCode,
+                    currencyCode: self.applePayConfig.basketCurrency,
+                    supportedNetworks: ['amex', 'discover', 'visa', 'masterCard'],
+                    merchantCapabilities: ['supports3DS', 'supportsCredit', 'supportsDebit'],
+                    total: {
+                        label: self.applePayConfig.merchantName,
+                        type: 'final',
+                        amount: self.applePayConfig.basketTotal
+                    },
+                    requiredBillingContactFields: ['postalAddress']
+                });
+
+            session.onvalidatemerchant = function(evt) {
+                console.log('Validating merchant...');
+
+                $.post({
+                    url: self.applePayConfig.startSessionUrl,
+                    headers: {
+                        'X-CSRFToken': Cookies.get('ecommerce_csrftoken')
+                    },
+                    data: JSON.stringify({url: evt.validationURL}),
+                    contentType: 'application/json',
+                    success: function(data) {
+                        console.log('Merchant validation succeeded.');
+                        console.log(data);
+                        session.completeMerchantValidation(data);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // TODO Display an error message to the learner
+                        console.log('Merchant validation failed!');
+                        console.log(textStatus);
+                        console.log(errorThrown);
+                        session.abort();
+                    }
+                });
+            };
+
+            session.onpaymentauthorized = function(evt) {
+                console.log('Submitting Apple Pay payment to CyberSource...');
+
+                $.post({
+                    url: self.applePayConfig.authorizeUrl,
+                    headers: {
+                        'X-CSRFToken': Cookies.get('ecommerce_csrftoken')
+                    },
+                    data: JSON.stringify(evt.payment),
+                    contentType: 'application/json',
+                    success: function(data) {
+                        console.log('Successfully submitted Apple Pay payment to CyberSource.');
+                        console.log(data);
+                        session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                        window.location.href = self.applePayConfig.receiptUrl + '?order_number=' + data.number;
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // TODO Display an error message to the learner
+                        console.log('Failed to submit Apple Pay payment to CyberSource!');
+                        console.log(textStatus);
+                        console.log(errorThrown);
+                        session.completePayment(ApplePaySession.STATUS_FAILURE);
+                    }
+                });
+            };
+
+            session.begin();
+
+            event.preventDefault();
+            event.stopPropagation();
+        },
+
+        onApplePaySetupButtonClicked: function(event) {
+            var self = this;
+            event.preventDefault();
+            event.stopPropagation();
+
+            ApplePaySession.openPaymentSetup(self.applePayConfig.merchantIdentifier)
+                .then(function(success) {
+                    if (success) {
+                        // Open payment setup successful
+                        // TODO Hide setup button
+                        // TODO Display pay button
+
+                    } else {
+                        // Open payment setup failed
+                        // TODO Inform user of setup failure
+                    }
+                })
+                .catch(function(e) {
+                    // Open payment setup error handling
+                    // TODO ???
+                    console.log(e);
+                });
         }
     };
 

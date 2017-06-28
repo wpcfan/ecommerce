@@ -1,9 +1,6 @@
 """Oscar-specific settings"""
 from __future__ import absolute_import
 
-from os.path import abspath, dirname, join
-
-from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from oscar import get_core_apps
 from oscar.defaults import *
@@ -117,6 +114,10 @@ PAYMENT_PROCESSOR_CONFIG = {
             'receipt_path': PAYMENT_PROCESSOR_RECEIPT_PATH,
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'send_level_2_3_details': True,
+            'apple_pay_merchant_identifier': '',
+            'apple_pay_merchant_id_domain_association': '',
+            'apple_pay_merchant_id_certificate_path': '',
+            'apple_pay_country_code': '',
         },
         'paypal': {
             # 'mode' can be either 'sandbox' or 'live'
@@ -131,6 +132,13 @@ PAYMENT_PROCESSOR_CONFIG = {
 }
 
 PAYMENT_PROCESSOR_SWITCH_PREFIX = 'payment_processor_active_'
+
+# TODO Move to CyberSource settings
+APPLE_PAY = {
+    'merchant_identifier': '',
+    'merchant_id_domain_association': '',
+    'merchant_identity_certificate_path': '',
+}
 # END PAYMENT PROCESSING
 
 
