@@ -45,12 +45,12 @@
         <h2 id="summary-region" class="title">{% trans "summary" %}</h2>
         <div id="line-price" class="amount row">
             <span class="description">{% trans "Price" %}</span>
-            <span class="price">{{basket.total_incl_tax_excl_discounts|currency:basket.currency}}</span>
+            <span class="price" data-price={{basket.total_incl_tax_excl_discounts}}>{{basket.total_incl_tax_excl_discounts|currency:basket.currency}}</span>
         </div>
         {% if basket.total_discount %}
             <div id="line-discount" class="amount row">
                 <span class="description">{% trans "Discounts applied" %}</span>
-                <span class="price">-{{basket.total_discount|currency:basket.currency}}</span>
+                <span class="price" data-price={{basket.total_discount}}>-{{basket.total_discount|currency:basket.currency}}</span>
             </div>
         {% endif %}
         <div id="offer-information" class="row">
@@ -99,7 +99,7 @@
         </div>
         <div id="basket-total" class="row" aria-describedby="total-price-desc">
             <span id="total-price-desc" class="description">{% trans "TOTAL" %}</span>
-            <span class="price">{{ order_total.incl_tax|currency:basket.currency }}</span>
+            <span class="price" data-price={{ order_total.incl_tax }}>{{ order_total.incl_tax|currency:basket.currency }}</span>
         </div>
     </div>
     {% if order_details_msg %}
