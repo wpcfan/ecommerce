@@ -1,7 +1,6 @@
 import logging
 
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from oscar.core.loading import get_class, get_model
 
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
@@ -34,38 +33,32 @@ class StripeSubmitView(EdxOrderPlacementMixin, BasePaymentSubmitView):
     def form_valid(self, form):
         form_data = form.cleaned_data
         basket = form_data['basket']
-        token = form_data['stripeToken']
+        token = form_data['stripe_token']
+        order_number = basket.order_number
+
+        try:
+            billing_address = self.payment_processor.get_address_from_token(token)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception(
+                'An error occurred while parsing the billing address for basket [%d]. No billing address will be '
+                'stored for the resulting order [%s].',
+                basket.id,
+                order_number)
+            billing_address = None
 
         try:
             self.handle_payment(token, basket)
-        except:  # pylint: disable=bare-except
+        except Exception:  # pylint: disable=broad-except
             logger.exception('An error occurred while processing the Stripe payment for basket [%d].', basket.id)
-            return HttpResponseRedirect(reverse('payment_error'))
+            return JsonResponse({}, status=400)
 
         shipping_method = NoShippingRequired()
         shipping_charge = shipping_method.calculate(basket)
         order_total = OrderTotalCalculator().calculate(basket, shipping_charge)
 
-        billing_address = BillingAddress(
-            first_name=form_data['first_name'],
-            last_name=form_data['last_name'],
-            line1=form_data['address_line1'],
-            line2=form_data.get('address_line2', ''),  # Address line 2 is optional
-            line4=form_data['city'],  # Oscar uses line4 for city
-            postcode=form_data.get('postal_code', ''),  # Postal code is optional
-            state=form_data.get('state', ''),  # State is optional
-            country=Country.objects.get(iso_3166_1_a2__iexact=form_data['country'])
-        )
-
-        user = basket.owner
-        # Given a basket, order number generation is idempotent. Although we've already
-        # generated this order number once before, it's faster to generate it again
-        # than to retrieve an invoice number from PayPal.
-        order_number = basket.order_number
-
         self.handle_order_placement(
             order_number=order_number,
-            user=user,
+            user=basket.owner,
             basket=basket,
             shipping_address=None,
             shipping_method=shipping_method,
@@ -75,9 +68,8 @@ class StripeSubmitView(EdxOrderPlacementMixin, BasePaymentSubmitView):
             request=self.request
         )
 
-        # Redirect to the receipt page
         receipt_url = get_receipt_page_url(
             site_configuration=self.request.site.siteconfiguration,
-            order_number=basket.order_number
+            order_number=order_number
         )
-        return HttpResponseRedirect(receipt_url)
+        return JsonResponse({'url': receipt_url}, status=201)

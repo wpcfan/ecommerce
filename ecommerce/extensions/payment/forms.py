@@ -29,6 +29,10 @@ def country_choices():
     return countries
 
 
+def update_basket_queryset_filter(form, user):
+    form.fields['basket'].queryset = form.fields['basket'].queryset.filter(owner=user, status=Basket.OPEN)
+
+
 class PaymentForm(forms.Form):
     """
     Payment form with billing details.
@@ -84,8 +88,7 @@ class PaymentForm(forms.Form):
                 css_class='form-item col-md-6'
             )
         )
-
-        self.fields['basket'].queryset = self.fields['basket'].queryset.filter(owner=user, status=Basket.OPEN)
+        update_basket_queryset_filter(self, user)
 
         for bound_field in self:
             # https://www.w3.org/WAI/tutorials/forms/validation/#validating-required-input
@@ -170,11 +173,41 @@ class PaymentForm(forms.Form):
 
             if postal_code and len(postal_code) > 9:
                 raise ValidationError(
-                    {'postal_code': _(
-                        'Postal codes for the U.S. and Canada are limited to nine (9) characters.')})
+                    {
+                        'postal_code': _(
+                            'Postal codes for the U.S. and Canada are limited to nine (9) characters.')
+                    })
 
         return cleaned_data
 
 
-class StripePaymentForm(PaymentForm):
-    stripeToken = forms.CharField(widget=forms.HiddenInput(), required=True)
+class StripePaymentForm(forms.Form):
+    """
+    Payment form for the Stripe payment processor.
+
+    This form differs drastically from `PaymentForm` because we can use the Stripe API to pull the billing address
+    from the token. This information is encoded in the token because we explicitly include the HTML form data in our
+    token creation request to Stripe.
+    """
+    stripe_token = forms.CharField(widget=forms.HiddenInput(), required=True)
+    basket = forms.ModelChoiceField(
+        queryset=Basket.objects.all(),
+        widget=forms.HiddenInput(),
+        error_messages={
+            'invalid_choice': _('There was a problem retrieving your basket. Refresh the page to try again.'),
+        }
+    )
+
+    def __init__(self, user, request, *args, **kwargs):
+        super(StripePaymentForm, self).__init__(*args, **kwargs)
+        self.request = request
+        update_basket_queryset_filter(self, user)
+
+    def clean_basket(self):
+        basket = self.cleaned_data['basket']
+
+        if basket:
+            basket.strategy = self.request.strategy
+            Applicator().apply(basket, self.request.user, self.request)
+
+        return basket

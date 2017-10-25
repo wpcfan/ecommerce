@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-24 01:45-0400\n"
+"POT-Creation-Date: 2017-10-28 12:34-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -194,11 +194,11 @@ msgstr ""
 msgid "Card expired"
 msgstr ""
 
-#: ecommerce/static/js/pages/basket_page.js:442
+#: ecommerce/static/js/pages/basket_page.js:461
 msgid "<Choose state/province>"
 msgstr ""
 
-#: ecommerce/static/js/pages/basket_page.js:443
+#: ecommerce/static/js/pages/basket_page.js:462
 msgid "State/Province (required)"
 msgstr ""
 
@@ -254,6 +254,16 @@ msgstr ""
 msgid ""
 "An error occurred while processing your payment. You have NOT been charged. "
 "Please try again, or select another payment method."
+msgstr ""
+
+#: ecommerce/static/js/payment_processors/stripe.js:50
+msgid "An error occurred while processing your payment. Please try again."
+msgstr ""
+
+#: ecommerce/static/js/payment_processors/stripe.js:93
+msgid ""
+"An error occurred while attempting to process your payment. You have not "
+"been charged. Please check your payment details, and try again."
 msgstr ""
 
 #: ecommerce/static/js/utils/utils.js:184
