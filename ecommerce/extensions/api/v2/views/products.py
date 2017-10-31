@@ -1,8 +1,10 @@
 """HTTP endpoints for interacting with products."""
 from django.db.models import Q
 from oscar.core.loading import get_model
-from rest_framework import filters
+from rest_framework import filters, status
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from ecommerce.extensions.api import serializers
@@ -11,6 +13,8 @@ from ecommerce.extensions.api.v2.views import NonDestroyableModelViewSet
 
 Product = get_model('catalogue', 'Product')
 
+import logging
+log = logging.getLogger('MLOTURCO LOGGER')
 
 class ProductViewSet(NestedViewSetMixin, NonDestroyableModelViewSet):
     serializer_class = serializers.ProductSerializer
@@ -29,3 +33,17 @@ class ProductViewSet(NestedViewSetMixin, NonDestroyableModelViewSet):
             Q(stockrecords__partner=self.request.site.siteconfiguration.partner) |
             Q(course__site=self.request.site)
         )
+
+    
+    @detail_route(methods=['post'])
+    def create_or_update(self, request, pk = None):
+        log.info('hit create or update')
+        #product = self.get_object()
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+                #product.data = serializer.data
+                #product.save()
+                Response({'status': 'you hit and saved'})
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
