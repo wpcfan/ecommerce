@@ -20,7 +20,7 @@ class ProductViewSet(NestedViewSetMixin, NonDestroyableModelViewSet):
     serializer_class = serializers.ProductSerializer
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = ProductFilter
-    permission_classes = (IsAuthenticated, IsAdminUser,)
+    permission_classes = ()#IsAuthenticated, IsAdminUser,)
 
     def get_queryset(self):
         self.queryset = Product.objects.all()
@@ -35,14 +35,15 @@ class ProductViewSet(NestedViewSetMixin, NonDestroyableModelViewSet):
         )
 
     
-    @detail_route(methods=['post'])
-    def create_or_update(self, request, pk = None):
+    #Is actually create or update :/
+    def create(self, request):
         log.info('hit create or update')
-        #product = self.get_object()
-        serializer = self.serializer_class(data=request.data)
+        log.info('request.data is %s',str(request.data))
+
+        serializer = self.serializer_class(data=request.data, context = {'request': request})
         if serializer.is_valid():
-                #product.data = serializer.data
-                #product.save()
+                serializer.save()
+                log.info('added product with data: %s',serializer.data)
                 Response({'status': 'you hit and saved'})
         else:
             return Response(serializer.errors,

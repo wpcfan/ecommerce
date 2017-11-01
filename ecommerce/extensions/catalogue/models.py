@@ -13,6 +13,8 @@ from ecommerce.core.constants import (
 )
 from ecommerce.core.utils import log_message_and_raise_validation_error
 
+import logging
+log = logging.getLogger('MLOTURCOMODElLOGGER')
 
 class Product(AbstractProduct):
     course = models.ForeignKey(
@@ -74,6 +76,9 @@ def update_enrollment_code(sender, **kwargs):  # pylint: disable=unused-argument
           automatically here)
     """
     instance = kwargs['instance']
+
+    log.info('instance is type : %s', str(type(instance)))
+    log.info('instance product class is : %s', str(instance.get_product_class()))
     if instance.is_seat_product and (instance.expires != instance.original_expires):
         enrollment_code = instance.course.get_enrollment_code()
         if enrollment_code and (enrollment_code.expires is None or enrollment_code.expires >= instance.expires):
