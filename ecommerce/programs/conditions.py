@@ -30,18 +30,20 @@ class ProgramCourseRunSeatsCondition(SingleItemConsumptionConditionMixin, Condit
 
     def get_applicable_skus(self, site_configuration):
         """ SKUs to which this condition applies. """
-        program_course_run_skus = set()
+        program_skus = set()
         program = get_program(self.program_uuid, site_configuration)
         if program:
             applicable_seat_types = program['applicable_seat_types']
 
             for course in program['courses']:
                 for course_run in course['course_runs']:
-                    program_course_run_skus.update(
+                    program_skus.update(
                         set([seat['sku'] for seat in course_run['seats'] if seat['type'] in applicable_seat_types])
                     )
-
-        return program_course_run_skus
+                for entitlement in course['entitlements']:
+                    if entitlement['mode'].lower() in applicable_seat_types:
+                        program_skus.update(entitlement['sku'])
+        return program_skus
 
     @check_condition_applicability()
     def is_satisfied(self, offer, basket):  # pylint: disable=unused-argument
@@ -55,7 +57,12 @@ class ProgramCourseRunSeatsCondition(SingleItemConsumptionConditionMixin, Condit
         Returns:
             bool
         """
-
+        basket_skus = set()
+        entitlement_products = True
+        for line in basket.all_lines():
+            basket_skus.add(line.stockrecord.partner_sku)
+            if not line.product.is_course_entitlement_product():
+                entitlement_products = False
         basket_skus = set([line.stockrecord.partner_sku for line in basket.all_lines()])
         try:
             program = get_program(self.program_uuid, basket.site.siteconfiguration)
@@ -68,27 +75,43 @@ class ProgramCourseRunSeatsCondition(SingleItemConsumptionConditionMixin, Condit
             return False
 
         enrollments = []
+        entitlements = []
+        api_resources = ['enrollments']
+        if entitlement_products:
+            api_resources.append('entitlements')
         if basket.site.siteconfiguration.enable_partial_program:
-            api_resource = 'enrollments'
-            cache_key = get_cache_key(
-                site_domain=basket.site.domain,
-                resource=api_resource,
-                username=basket.owner.username,
-            )
-            enrollments = cache.get(cache_key, [])
-            if not enrollments:
-                api = basket.site.siteconfiguration.enrollment_api_client
-                user = basket.owner.username
-                try:
-                    enrollments = api.enrollment.get(user=user)
-                    cache.set(cache_key, enrollments, settings.ENROLLMENT_API_CACHE_TIMEOUT)
-                except (ConnectionError, SlumberBaseException, Timeout) as exc:
-                    logger.error('Failed to retrieve enrollments: %s', str(exc))
+            for api_resource in api_resources:
+                cache_key = get_cache_key(
+                    site_domain=basket.site.domain,
+                    resource=api_resource,
+                    username=basket.owner.username,
+                )
+                user_data_list = cache.get(cache_key, [])
+                if not user_data_list:
+                    api = basket.site.siteconfiguration.enrollment_api_client
+                    user = basket.owner.username
+                    try:
+                        if api_resource == 'enrollments':
+                            user_data_list = api.enrollment.get(user=user)
+                        else:
+                            user_data_list = api.entitlement.get(user=user)
+                        cache.set(cache_key, user_data_list, settings.ENROLLMENT_API_CACHE_TIMEOUT)
+                    except (ConnectionError, SlumberBaseException, Timeout) as exc:
+                        logger.error('Failed to retrieve %s : %s', api_resource, str(exc))
+                if api_resource == 'enrollments':
+                    enrollments = user_data_list
+                else:
+                    entitlements = user_data_list
 
         for course in program['courses']:
+            msg = 'Course: {}'.format(course['key'])
+            logger.warning(msg)
             # If the user is already enrolled in a course, we do not need to check their basket for it
             if any(course['key'] in enrollment['course_details']['course_id'] and
                    enrollment['mode'] in applicable_seat_types for enrollment in enrollments):
+                continue
+            if any(course['uuid'] in entitlement['course_uuid'] and
+                   entitlement['mode'] in applicable_seat_types for entitlement in entitlements):
                 continue
 
             # If the  basket has no SKUs left, but we still have courses over which
@@ -100,6 +123,11 @@ class ProgramCourseRunSeatsCondition(SingleItemConsumptionConditionMixin, Condit
             skus = set()
             for course_run in course['course_runs']:
                 skus.update(set([seat['sku'] for seat in course_run['seats'] if seat['type'] in applicable_seat_types]))
+            msg = 'Number of Entitlements for this course: {}'.format(len(course['entitlements']))
+            logger.warning(msg)
+            for entitlement in course['entitlements']:
+                if entitlement['mode'].lower() in applicable_seat_types:
+                    skus.update(entitlement['sku'])
 
             # The lack of a difference in the set of SKUs in the basket and the course indicates that
             # that there is no intersection. Therefore, the basket contains no SKUs for the current course.
