@@ -51,6 +51,8 @@ class Stripe(ApplePayMixin, BaseClientSidePaymentProcessor):
         return str((basket.total_incl_tax * 100).to_integral_value())
 
     def handle_processor_response(self, response, basket=None):
+        # NOTE: This may be a Source (rather than a Token) if the user pays with Alipay or
+        # other asynchronous payment methods.
         token = response
         order_number = basket.order_number
         currency = basket.currency
@@ -79,8 +81,15 @@ class Stripe(ApplePayMixin, BaseClientSidePaymentProcessor):
             raise TransactionDeclined(msg, basket.id, ex.http_status)
 
         total = basket.total_incl_tax
-        card_number = charge.source.last4
-        card_type = STRIPE_CARD_TYPE_MAP.get(charge.source.brand)
+
+        source = charge.source
+        if source.object == 'card':
+            card_number = source.last4
+            card_type = STRIPE_CARD_TYPE_MAP.get(source.brand)
+        else:
+            # TODO Determine what to display for Stripe sources (e.g. Alipay, Bitcoin)
+            card_number = source.type
+            card_type = source.type
 
         return HandledProcessorResponse(
             transaction_id=transaction_id,
