@@ -45,6 +45,41 @@ class ProgramCourseRunSeatsCondition(SingleItemConsumptionConditionMixin, Condit
                         program_skus.update(entitlement['sku'])
         return program_skus
 
+    def get_user_ownership_data(self, basket, retrieve_entitlements):
+        """
+        Retrieves existing enrollments and entitlements for a user from LMS
+        """
+        enrollments = []
+        entitlements = []
+        api_resources = ['enrollments']
+        if retrieve_entitlements:
+            api_resources.append('entitlements')
+        if basket.site.siteconfiguration.enable_partial_program:
+            for api_resource in api_resources:
+                cache_key = get_cache_key(
+                    site_domain=basket.site.domain,
+                    resource=api_resource,
+                    username=basket.owner.username,
+                )
+                user_data_list = cache.get(cache_key, [])
+                if not user_data_list:
+                    user = basket.owner.username
+                    try:
+                        if api_resource == 'enrollments':
+                            api = basket.site.siteconfiguration.enrollment_api_client
+                            user_data_list = api.enrollment.get(user=user)
+                        else:
+                            api = basket.site.siteconfiguration.entitlement_api_client
+                            user_data_list = api.entitlement.get(user=user)
+                        cache.set(cache_key, user_data_list, settings.ENROLLMENT_API_CACHE_TIMEOUT)
+                    except (ConnectionError, SlumberBaseException, Timeout) as exc:
+                        logger.error('Failed to retrieve %s : %s', api_resource, str(exc))
+                if api_resource == 'enrollments':
+                    enrollments = user_data_list
+                else:
+                    entitlements = user_data_list
+        return enrollments, entitlements
+
     @check_condition_applicability()
     def is_satisfied(self, offer, basket):  # pylint: disable=unused-argument
         """
@@ -61,9 +96,9 @@ class ProgramCourseRunSeatsCondition(SingleItemConsumptionConditionMixin, Condit
         entitlement_products = True
         for line in basket.all_lines():
             basket_skus.add(line.stockrecord.partner_sku)
-            if not line.product.is_course_entitlement_product():
+            if not line.product.is_course_entitlement_product:
                 entitlement_products = False
-        basket_skus = set([line.stockrecord.partner_sku for line in basket.all_lines()])
+
         try:
             program = get_program(self.program_uuid, basket.site.siteconfiguration)
         except (HttpNotFoundError, SlumberBaseException, Timeout):
@@ -74,34 +109,7 @@ class ProgramCourseRunSeatsCondition(SingleItemConsumptionConditionMixin, Condit
         else:
             return False
 
-        enrollments = []
-        entitlements = []
-        api_resources = ['enrollments']
-        if entitlement_products:
-            api_resources.append('entitlements')
-        if basket.site.siteconfiguration.enable_partial_program:
-            for api_resource in api_resources:
-                cache_key = get_cache_key(
-                    site_domain=basket.site.domain,
-                    resource=api_resource,
-                    username=basket.owner.username,
-                )
-                user_data_list = cache.get(cache_key, [])
-                if not user_data_list:
-                    api = basket.site.siteconfiguration.enrollment_api_client
-                    user = basket.owner.username
-                    try:
-                        if api_resource == 'enrollments':
-                            user_data_list = api.enrollment.get(user=user)
-                        else:
-                            user_data_list = api.entitlement.get(user=user)
-                        cache.set(cache_key, user_data_list, settings.ENROLLMENT_API_CACHE_TIMEOUT)
-                    except (ConnectionError, SlumberBaseException, Timeout) as exc:
-                        logger.error('Failed to retrieve %s : %s', api_resource, str(exc))
-                if api_resource == 'enrollments':
-                    enrollments = user_data_list
-                else:
-                    entitlements = user_data_list
+        enrollments, entitlements = self.get_user_ownership_data(basket, entitlement_products)
 
         for course in program['courses']:
             msg = 'Course: {}'.format(course['key'])
