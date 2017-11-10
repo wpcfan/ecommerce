@@ -31,6 +31,7 @@ help:
 	@echo '                                                                                     		'
 
 requirements.js:
+	https://github.com/wpcfan/ecommerce.git
 	npm install
 	# Allow root for Docker
 	$(NODE_BIN)/bower install --allow-root
