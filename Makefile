@@ -32,7 +32,8 @@ help:
 
 requirements.js:
 	https://github.com/wpcfan/ecommerce.git
-	cnpm install
+	npm config set registry https://registry.npm.taobao.org
+	npm install
 	# Allow root for Docker
 	$(NODE_BIN)/bower install --allow-root
 
